@@ -8,6 +8,7 @@
 package main
 
 import (
+	"runtime"
 	"bufio"
 	"fmt"
 	"io/ioutil"
@@ -18,17 +19,10 @@ import (
 )
 
 var (
-	cores = 1 // count of cpu cores to scale cpu usage
+	cores = runtime.NumCPU() // count of cores to scale cpu usage
 	rxOld = 0
 	txOld = 0
 )
-
-// init reads the core count since you probably do not have a hot-pluggable cpu
-func init() {
-	if cpuinfo, err := ioutil.ReadFile("/proc/cpuinfo"); err == nil {
-		cores = strings.Count(string(cpuinfo), "model name")
-	}
-}
 
 // fixed builds a fixed width string with given pre- and fitting suffix
 func fixed(pre string, rate int) string {
