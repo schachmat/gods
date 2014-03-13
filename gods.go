@@ -1,3 +1,10 @@
+// This programm collects some system information, formats it nicely and sets
+// the X root windows name so it can be displayed in the dwm status bar.
+//
+// The strange characters in the output are used by dwm to colorize the output
+// ( to ) and as Icons or separators (e.g. "Ý").
+//
+// For license information see the file LICENSE
 package main
 
 import "bufio"
