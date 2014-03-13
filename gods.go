@@ -51,8 +51,8 @@ func fixed(pre string, rate int) string {
 	return pre + strings.Replace(formated, ".", "à", 1) + suf
 }
 
-// updateNetSpeed reads current transfer rates of certain network interfaces
-func updateNetSpeed() string {
+// net reads current transfer rates of certain network interfaces
+func net() string {
 	file, err := os.Open("/proc/net/dev")
 	if err != nil {
 		return "Ð ERR Ñ ERR"
@@ -86,8 +86,8 @@ func colored(icon string, percentage int) string {
 	return fmt.Sprintf("%s%3d", icon, percentage)
 }
 
-// updateCpuUse reads the last minute sysload and scales it to the core count
-func updateCpuUse() string {
+// cpu reads the last minute sysload and scales it to the core count
+func cpu() string {
 	var load float32
 	var loadavg, err = ioutil.ReadFile("/proc/loadavg")
 	if err != nil {
@@ -100,8 +100,8 @@ func updateCpuUse() string {
 	return colored("Ï", int(load*100.0/float32(cores)))
 }
 
-// updateMemUse reads the memory used by applications and scales to [0, 100]
-func updateMemUse() string {
+// mem reads the memory used by applications and scales to [0, 100]
+func mem() string {
 	var file, err = os.Open("/proc/meminfo")
 	if err != nil {
 		return "ÞERR"
@@ -142,11 +142,7 @@ func main() {
 
 	// update status every full second
 	for clock := range time.Tick(time.Second) {
-		var elements = []string{""}
-		elements = append(elements, updateNetSpeed())
-		elements = append(elements, updateCpuUse())
-		elements = append(elements, updateMemUse())
-		elements = append(elements, clock.Format("Mon 02 Ý 15:04:05"))
-		exec.Command("xsetroot", "-name", strings.Join(elements, "û")).Run()
+		var status = []string{"", net(), cpu(), mem(), clock.Format("Mon 02 Ý 15:04:05")}
+		exec.Command("xsetroot", "-name", strings.Join(status, "û")).Run()
 	}
 }
