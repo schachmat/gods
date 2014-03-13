@@ -72,7 +72,7 @@ func updateNetSpeed() string {
 		}
 	}
 
-	defer func() {rxOld, txOld = rxNow, txNow}()
+	defer func() { rxOld, txOld = rxNow, txNow }()
 	return fmt.Sprintf("%s %s", fixed("Ð", rxNow-rxOld), fixed("Ñ", txNow-txOld))
 }
 
@@ -97,7 +97,7 @@ func updateCpuUse() string {
 	if err != nil {
 		return "ÏERR"
 	}
-	return colored("Ï", int(load * 100.0 / float32(cores)))
+	return colored("Ï", int(load*100.0/float32(cores)))
 }
 
 // updateMemUse reads the memory used by applications and scales to [0, 100]
@@ -131,7 +131,7 @@ func updateMemUse() string {
 			done |= 8
 		}
 	}
-	return colored("Þ", used * 100 / total)
+	return colored("Þ", used*100/total)
 }
 
 // main updates the dwm statusbar every second
