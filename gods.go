@@ -7,21 +7,24 @@
 // For license information see the file LICENSE
 package main
 
-import "bufio"
-import "fmt"
-import "io/ioutil"
-import "os"
-import "os/exec"
-import "strings"
-import "time"
+import (
+	"bufio"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"os/exec"
+	"strings"
+	"time"
+)
 
-var cores = 1
-var rxOld = 0
-var txOld = 0
+var (
+	cores = 1 // count of cpu cores to scale cpu usage
+	rxOld = 0
+	txOld = 0
+)
 
-// init reads the count of cpu cores since it should not change during runtime
+// init reads the core count since you probably do not have a hot-pluggable cpu
 func init() {
-	// You probably do not have hot-pluggable cpu cores
 	if cpuinfo, err := ioutil.ReadFile("/proc/cpuinfo"); err == nil {
 		cores = strings.Count(string(cpuinfo), "model name")
 	}
@@ -58,8 +61,8 @@ func fixed(pre string, rate int) string {
 	return pre + strings.Replace(formated, ".", "à", 1) + suf
 }
 
-// net reads current transfer rates of certain network interfaces
-func net() string {
+// updateNetUse reads current transfer rates of certain network interfaces
+func updateNetUse() string {
 	file, err := os.Open("/proc/net/dev")
 	if err != nil {
 		return "Ð ERR Ñ ERR"
@@ -93,8 +96,8 @@ func colored(icon string, percentage int) string {
 	return fmt.Sprintf("%s%3d", icon, percentage)
 }
 
-// cpu reads the last minute sysload and scales it to the core count
-func cpu() string {
+// updateCpuUse reads the last minute sysload and scales it to the core count
+func updateCpuUse() string {
 	var load float32
 	var loadavg, err = ioutil.ReadFile("/proc/loadavg")
 	if err != nil {
@@ -107,8 +110,8 @@ func cpu() string {
 	return colored("Ï", int(load*100.0/float32(cores)))
 }
 
-// mem reads the memory used by applications and scales to [0, 100]
-func mem() string {
+// updateMemUse reads the memory used by applications and scales to [0, 100]
+func updateMemUse() string {
 	var file, err = os.Open("/proc/meminfo")
 	if err != nil {
 		return "ÞERR"
@@ -149,7 +152,13 @@ func main() {
 
 	// update status every full second
 	for clock := range time.Tick(time.Second) {
-		var status = []string{"", net(), cpu(), mem(), clock.Format("Mon 02 Ý 15:04:05")}
+		var status = []string{
+			"",
+			updateNetUse(),
+			updateCpuUse(),
+			updateMemUse(),
+			clock.Format("Mon 02 Ý 15:04:05"),
+		}
 		exec.Command("xsetroot", "-name", strings.Join(status, "û")).Run()
 	}
 }
