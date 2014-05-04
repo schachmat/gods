@@ -70,7 +70,7 @@ func updateNetUse() string {
 		_, err = fmt.Sscanf(scanner.Text(), "%s %d %d %d %d %d %d %d %d %d",
 			&dev, &rx, &void, &void, &void, &void, &void, &void, &void, &tx)
 		switch dev { // ignore devices like tun, tap, lo, ...
-		case "eth0:", "eth1:", "wlan0:", "ppp:":
+		case "eth0:", "eth1:", "wlan0:", "ppp0:":
 			rxNow += rx
 			txNow += tx
 		}
