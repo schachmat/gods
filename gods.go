@@ -140,10 +140,6 @@ func updateMemUse() string {
 
 // main updates the dwm statusbar every second
 func main() {
-	// sleep until beginning of next second
-	var now = time.Now()
-	time.Sleep(now.Truncate(time.Second).Add(time.Second).Sub(now))
-
 	for {
 		var status = []string{
 			"",
@@ -153,7 +149,9 @@ func main() {
 			time.Now().Local().Format("Mon 02 Ý 15:04:05"),
 		}
 		exec.Command("xsetroot", "-name", strings.Join(status, "û")).Run()
-		now = time.Now()
+
+		// sleep until beginning of next second
+		var now = time.Now()
 		time.Sleep(now.Truncate(time.Second).Add(time.Second).Sub(now))
 	}
 }
