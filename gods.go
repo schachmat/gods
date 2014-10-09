@@ -144,15 +144,16 @@ func main() {
 	var now = time.Now()
 	time.Sleep(now.Truncate(time.Second).Add(time.Second).Sub(now))
 
-	// update status every full second
-	for clock := range time.Tick(time.Second) {
+	for {
 		var status = []string{
 			"",
 			updateNetUse(),
 			updateCpuUse(),
 			updateMemUse(),
-			clock.Format("Mon 02 Ý 15:04:05"),
+			time.Now().Local().Format("Mon 02 Ý 15:04:05"),
 		}
 		exec.Command("xsetroot", "-name", strings.Join(status, "û")).Run()
+		now = time.Now()
+		time.Sleep(now.Truncate(time.Second).Add(time.Second).Sub(now))
 	}
 }
