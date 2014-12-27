@@ -15,6 +15,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"strconv"
 	"time"
 )
 
@@ -90,6 +91,51 @@ func colored(icon string, percentage int) string {
 	return fmt.Sprintf("%s%3d", icon, percentage)
 }
 
+// updatePower reads the current battery and power plug status
+func updatePower() string {
+	var en_full, en_now, en_perc int = 0, 0, 0
+	var plugged, err = ioutil.ReadFile("/sys/class/power_supply/AC/online")
+	if err != nil {
+		return "ÏERR"
+	}
+	batts, err := ioutil.ReadDir("/sys/class/power_supply")
+	if err != nil {
+		return "ÏERR"
+	}
+
+	readval := func(name, field string) int {
+		var path = "/sys/class/power_supply/" + name + "/" + field
+		if tmp, err := ioutil.ReadFile(path); err == nil {
+			if ret, err := strconv.Atoi(strings.TrimSpace(string(tmp))); err == nil {
+				return ret
+			}
+		}
+		return 0
+	}
+
+	for _, batt := range(batts) {
+		if ! strings.HasPrefix(batt.Name(), "BAT") {
+			continue
+		}
+
+		en_full += readval(batt.Name(), "energy_full")
+		en_now += readval(batt.Name(), "energy_now")
+	}
+
+	en_perc = en_now * 100 / en_full
+	var icon = "è"
+	if string(plugged) == "1\n" {
+		icon = "é"
+	}
+
+	if en_perc <= 5 {
+		return fmt.Sprintf("%s%3d", icon, en_perc)
+	} else if en_perc <= 10 {
+		return fmt.Sprintf("%s%3d", icon, en_perc)
+	}
+	return fmt.Sprintf("%s%3d", icon, en_perc)
+}
+
 // updateCpuUse reads the last minute sysload and scales it to the core count
 func updateCpuUse() string {
 	var load float32
@@ -146,6 +192,7 @@ func main() {
 			updateNetUse(),
 			updateCpuUse(),
 			updateMemUse(),
+			updatePower(),
 			time.Now().Local().Format("Mon 02 Ý 15:04:05"),
 		}
 		exec.Command("xsetroot", "-name", strings.Join(status, "û")).Run()
