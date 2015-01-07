@@ -93,7 +93,7 @@ func colored(icon string, percentage int) string {
 
 // updatePower reads the current battery and power plug status
 func updatePower() string {
-	var en_full, en_now, en_perc int = 0, 0, 0
+	var enFull, enNow, enPerc int = 0, 0, 0
 	var plugged, err = ioutil.ReadFile("/sys/class/power_supply/AC/online")
 	if err != nil {
 		return "ÏERR"
@@ -118,26 +118,26 @@ func updatePower() string {
 			continue
 		}
 
-		en_full += readval(batt.Name(), "energy_full")
-		en_now += readval(batt.Name(), "energy_now")
+		enFull += readval(batt.Name(), "energy_full")
+		enNow += readval(batt.Name(), "energy_now")
 	}
 
-	en_perc = en_now * 100 / en_full
+	enPerc = enNow * 100 / enFull
 	var icon = "è"
 	if string(plugged) == "1\n" {
 		icon = "é"
 	}
 
-	if en_perc <= 5 {
-		return fmt.Sprintf("%s%3d", icon, en_perc)
-	} else if en_perc <= 10 {
-		return fmt.Sprintf("%s%3d", icon, en_perc)
+	if enPerc <= 5 {
+		return fmt.Sprintf("%s%3d", icon, enPerc)
+	} else if enPerc <= 10 {
+		return fmt.Sprintf("%s%3d", icon, enPerc)
 	}
-	return fmt.Sprintf("%s%3d", icon, en_perc)
+	return fmt.Sprintf("%s%3d", icon, enPerc)
 }
 
-// updateCpuUse reads the last minute sysload and scales it to the core count
-func updateCpuUse() string {
+// updateCPUUse reads the last minute sysload and scales it to the core count
+func updateCPUUse() string {
 	var load float32
 	var loadavg, err = ioutil.ReadFile("/proc/loadavg")
 	if err != nil {
@@ -190,7 +190,7 @@ func main() {
 		var status = []string{
 			"",
 			updateNetUse(),
-			updateCpuUse(),
+			updateCPUUse(),
 			updateMemUse(),
 			updatePower(),
 			time.Now().Local().Format("Mon 02 Ý 15:04:05"),
