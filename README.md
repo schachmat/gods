@@ -16,10 +16,12 @@ patch](http://dwm.suckless.org/patches/statuscolors) is recommended.
 ##Usage
 
 To install, run
+
 	go get github.com/schachmat/gods
 
 Then add the following line to your `.xinitrc` or whereever you start dwm, but
 before actually starting dwm:
+
 	$GOPATH/bin/gods &
 
 ##Configuration
