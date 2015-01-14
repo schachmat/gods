@@ -2,7 +2,10 @@
 // the X root windows name so it can be displayed in the dwm status bar.
 //
 // The strange characters in the output are used by dwm to colorize the output
-// ( to ) and as Icons or separators (e.g. "Ý").
+// ( to , needs the http://dwm.suckless.org/patches/statuscolors patch) and
+// as Icons or separators (e.g. "Ý"). If you don't use the status-18 font
+// (https://github.com/schachmat/status-18), you should probably exchange them
+// by something else ("CPU", "MEM", "|" for separators, …).
 //
 // For license information see the file LICENSE
 package main
@@ -117,7 +120,6 @@ func updatePower() string {
 		if ! strings.HasPrefix(batt.Name(), "BAT") {
 			continue
 		}
-
 		enFull += readval(batt.Name(), "energy_full")
 		enNow += readval(batt.Name(), "energy_now")
 	}
