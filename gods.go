@@ -108,11 +108,18 @@ func updatePower() string {
 	}
 
 	readval := func(name, field string) int {
-		var path = powerSupply + name + "/" + field
-		if tmp, err := ioutil.ReadFile(path); err == nil {
-			if ret, err := strconv.Atoi(strings.TrimSpace(string(tmp))); err == nil {
-				return ret
-			}
+		var path = powerSupply + name + "/"
+		var file []byte
+		if tmp, err := ioutil.ReadFile(path + "energy_" + field); err == nil {
+			file = tmp
+		} else if tmp, err := ioutil.ReadFile(path + "charge_" + field); err == nil {
+			file = tmp
+		} else {
+			return 0
+		}
+
+		if ret, err := strconv.Atoi(strings.TrimSpace(string(file))); err == nil {
+			return ret
 		}
 		return 0
 	}
@@ -123,21 +130,12 @@ func updatePower() string {
 			continue
 		}
 
-		var fileFull, fileNow string
-		if f, _ := os.Stat(powerSupply + name + "/energy_full"); f != nil {
-			fileFull = "energy_full"
-		} else if f, _ := os.Stat(powerSupply + name + "/charge_full"); f != nil {
-			fileFull = "charge_full"
-		}
+		enFull += readval(name, "full")
+		enNow += readval(name, "now")
+	}
 
-		if f, _ := os.Stat(powerSupply + name + "/energy_now"); f != nil {
-			fileFull = "energy_now"
-		} else if f, _ := os.Stat(powerSupply + name + "/charge_now"); f != nil {
-			fileNow = "charge_now"
-		}
-
-		enFull += readval(name, fileFull)
-		enNow += readval(name, fileNow)
+	if enFull == 0 { // Battery found but no readable full file.
+		return "ÏERR"
 	}
 
 	enPerc = enNow * 100 / enFull
