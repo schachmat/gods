@@ -11,14 +11,14 @@
 package main
 
 import (
-	"runtime"
 	"bufio"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"strings"
+	"runtime"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -96,18 +96,19 @@ func colored(icon string, percentage int) string {
 
 // updatePower reads the current battery and power plug status
 func updatePower() string {
+	const powerSupply = "/sys/class/power_supply/"
 	var enFull, enNow, enPerc int = 0, 0, 0
-	var plugged, err = ioutil.ReadFile("/sys/class/power_supply/AC/online")
+	var plugged, err = ioutil.ReadFile(powerSupply + "AC/online")
 	if err != nil {
 		return "ÏERR"
 	}
-	batts, err := ioutil.ReadDir("/sys/class/power_supply")
+	batts, err := ioutil.ReadDir(powerSupply)
 	if err != nil {
 		return "ÏERR"
 	}
 
 	readval := func(name, field string) int {
-		var path = "/sys/class/power_supply/" + name + "/" + field
+		var path = powerSupply + name + "/" + field
 		if tmp, err := ioutil.ReadFile(path); err == nil {
 			if ret, err := strconv.Atoi(strings.TrimSpace(string(tmp))); err == nil {
 				return ret
@@ -116,12 +117,27 @@ func updatePower() string {
 		return 0
 	}
 
-	for _, batt := range(batts) {
-		if ! strings.HasPrefix(batt.Name(), "BAT") {
+	for _, batt := range batts {
+		name := batt.Name()
+		if !strings.HasPrefix(name, "BAT") {
 			continue
 		}
-		enFull += readval(batt.Name(), "energy_full")
-		enNow += readval(batt.Name(), "energy_now")
+
+		var fileFull, fileNow string
+		if f, _ := os.Stat(powerSupply + name + "/energy_full"); f != nil {
+			fileFull = "energy_full"
+		} else if f, _ := os.Stat(powerSupply + name + "/charge_full"); f != nil {
+			fileFull = "charge_full"
+		}
+
+		if f, _ := os.Stat(powerSupply + name + "/energy_now"); f != nil {
+			fileFull = "energy_now"
+		} else if f, _ := os.Stat(powerSupply + name + "/charge_now"); f != nil {
+			fileNow = "charge_now"
+		}
+
+		enFull += readval(name, fileFull)
+		enNow += readval(name, fileNow)
 	}
 
 	enPerc = enNow * 100 / enFull
