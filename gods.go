@@ -11,14 +11,14 @@
 package main
 
 import (
-	"runtime"
 	"bufio"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"strings"
+	"runtime"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -96,32 +96,46 @@ func colored(icon string, percentage int) string {
 
 // updatePower reads the current battery and power plug status
 func updatePower() string {
+	const powerSupply = "/sys/class/power_supply/"
 	var enFull, enNow, enPerc int = 0, 0, 0
-	var plugged, err = ioutil.ReadFile("/sys/class/power_supply/AC/online")
+	var plugged, err = ioutil.ReadFile(powerSupply + "AC/online")
 	if err != nil {
 		return "ÏERR"
 	}
-	batts, err := ioutil.ReadDir("/sys/class/power_supply")
+	batts, err := ioutil.ReadDir(powerSupply)
 	if err != nil {
 		return "ÏERR"
 	}
 
 	readval := func(name, field string) int {
-		var path = "/sys/class/power_supply/" + name + "/" + field
-		if tmp, err := ioutil.ReadFile(path); err == nil {
-			if ret, err := strconv.Atoi(strings.TrimSpace(string(tmp))); err == nil {
-				return ret
-			}
+		var path = powerSupply + name + "/"
+		var file []byte
+		if tmp, err := ioutil.ReadFile(path + "energy_" + field); err == nil {
+			file = tmp
+		} else if tmp, err := ioutil.ReadFile(path + "charge_" + field); err == nil {
+			file = tmp
+		} else {
+			return 0
+		}
+
+		if ret, err := strconv.Atoi(strings.TrimSpace(string(file))); err == nil {
+			return ret
 		}
 		return 0
 	}
 
-	for _, batt := range(batts) {
-		if ! strings.HasPrefix(batt.Name(), "BAT") {
+	for _, batt := range batts {
+		name := batt.Name()
+		if !strings.HasPrefix(name, "BAT") {
 			continue
 		}
-		enFull += readval(batt.Name(), "energy_full")
-		enNow += readval(batt.Name(), "energy_now")
+
+		enFull += readval(name, "full")
+		enNow += readval(name, "now")
+	}
+
+	if enFull == 0 { // Battery found but no readable full file.
+		return "ÏERR"
 	}
 
 	enPerc = enNow * 100 / enFull
