@@ -22,6 +22,27 @@ import (
 	"time"
 )
 
+const (
+	netDev = "eth0"
+
+	bpsSign   = "á"
+	kibpsSign = "â"
+	mibpsSign = "ã"
+
+	unpluggedSign = "è"
+	pluggedSign   = "é"
+
+	cpuSign = "Ï"
+	memSign = "Þ"
+
+	netReceivedSign    = "Ð"
+	netTransmittedSign = "Ñ"
+
+	floatSeparator = "à"
+	dateSeparator  = "Ý"
+	fieldSeparator = "û"
+)
+
 var (
 	cores = runtime.NumCPU() // count of cores to scale cpu usage
 	rxOld = 0
@@ -35,17 +56,18 @@ func fixed(pre string, rate int) string {
 	}
 
 	var spd = float32(rate)
-	var suf = "á" // default: display as B/s
+	var suf = bpsSign // default: display as B/s
+
 	switch {
 	case spd >= (1000 * 1024 * 1024): // > 999 MiB/s
 		return "" + pre + "ERR"
 	case spd >= (1000 * 1024): // display as MiB/s
 		spd /= (1024 * 1024)
-		suf = "ã"
+		suf = mibpsSign
 		pre = "" + pre + ""
 	case spd >= 1000: // display as KiB/s
 		spd /= 1024
-		suf = "â"
+		suf = kibpsSign
 	}
 
 	var formated = ""
@@ -56,14 +78,14 @@ func fixed(pre string, rate int) string {
 	} else {
 		formated = fmt.Sprintf(" %3.1f", spd)
 	}
-	return pre + strings.Replace(formated, ".", "à", 1) + suf
+	return pre + strings.Replace(formated, ".", floatSeparator, 1) + suf
 }
 
 // updateNetUse reads current transfer rates of certain network interfaces
 func updateNetUse() string {
 	file, err := os.Open("/proc/net/dev")
 	if err != nil {
-		return "Ð ERR Ñ ERR"
+		return netReceivedSign + " ERR " + netTransmittedSign + " ERR"
 	}
 	defer file.Close()
 
@@ -74,14 +96,14 @@ func updateNetUse() string {
 		_, err = fmt.Sscanf(scanner.Text(), "%s %d %d %d %d %d %d %d %d %d",
 			&dev, &rx, &void, &void, &void, &void, &void, &void, &void, &tx)
 		switch dev { // ignore devices like tun, tap, lo, ...
-		case "eth0:", "eth1:", "wlan0:", "ppp0:":
+		case "ppp0:", "eth1:", "wlan0:", netDev + ":":
 			rxNow += rx
 			txNow += tx
 		}
 	}
 
 	defer func() { rxOld, txOld = rxNow, txNow }()
-	return fmt.Sprintf("%s %s", fixed("Ð", rxNow-rxOld), fixed("Ñ", txNow-txOld))
+	return fmt.Sprintf("%s %s", fixed(netReceivedSign, rxNow-rxOld), fixed(netTransmittedSign, txNow-txOld))
 }
 
 // colored surrounds the percentage with color escapes if it is >= 70
@@ -139,9 +161,9 @@ func updatePower() string {
 	}
 
 	enPerc = enNow * 100 / enFull
-	var icon = "è"
+	var icon = unpluggedSign
 	if string(plugged) == "1\n" {
-		icon = "é"
+		icon = pluggedSign
 	}
 
 	if enPerc <= 5 {
@@ -157,20 +179,20 @@ func updateCPUUse() string {
 	var load float32
 	var loadavg, err = ioutil.ReadFile("/proc/loadavg")
 	if err != nil {
-		return "ÏERR"
+		return cpuSign + "ERR"
 	}
 	_, err = fmt.Sscanf(string(loadavg), "%f", &load)
 	if err != nil {
-		return "ÏERR"
+		return cpuSign + "ERR"
 	}
-	return colored("Ï", int(load*100.0/float32(cores)))
+	return colored(cpuSign, int(load*100.0/float32(cores)))
 }
 
 // updateMemUse reads the memory used by applications and scales to [0, 100]
 func updateMemUse() string {
 	var file, err = os.Open("/proc/meminfo")
 	if err != nil {
-		return "ÞERR"
+		return memSign + "ERR"
 	}
 	defer file.Close()
 
@@ -179,7 +201,7 @@ func updateMemUse() string {
 	for info := bufio.NewScanner(file); done != 15 && info.Scan(); {
 		var prop, val = "", 0
 		if _, err = fmt.Sscanf(info.Text(), "%s %d", &prop, &val); err != nil {
-			return "ÞERR"
+			return memSign + "ERR"
 		}
 		switch prop {
 		case "MemTotal:":
@@ -197,7 +219,7 @@ func updateMemUse() string {
 			done |= 8
 		}
 	}
-	return colored("Þ", used*100/total)
+	return colored(memSign, used*100/total)
 }
 
 // main updates the dwm statusbar every second
@@ -209,9 +231,9 @@ func main() {
 			updateCPUUse(),
 			updateMemUse(),
 			updatePower(),
-			time.Now().Local().Format("Mon 02 Ý 15:04:05"),
+			time.Now().Local().Format("Mon 02 " + dateSeparator + " 15:04:05"),
 		}
-		exec.Command("xsetroot", "-name", strings.Join(status, "û")).Run()
+		exec.Command("xsetroot", "-name", strings.Join(status, fieldSeparator)).Run()
 
 		// sleep until beginning of next second
 		var now = time.Now()
