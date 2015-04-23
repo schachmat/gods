@@ -23,8 +23,6 @@ import (
 )
 
 const (
-	netDev = "eth0"
-
 	bpsSign   = "á"
 	kibpsSign = "â"
 	mibpsSign = "ã"
@@ -102,8 +100,6 @@ func updateNetUse() string {
 		_, err = fmt.Sscanf(scanner.Text(), "%s %d %d %d %d %d %d %d %d %d",
 			&dev, &rx, &void, &void, &void, &void, &void, &void, &void, &tx)
 		if _, ok := netDevs[dev]; ok {
-//		switch dev { // ignore devices like tun, tap, lo, ...
-//		case "ppp0:", "eth1:", "wlan0:", netDev + ":":
 			rxNow += rx
 			txNow += tx
 		}
