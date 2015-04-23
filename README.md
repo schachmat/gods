@@ -38,6 +38,9 @@ go, as I use it. No additional features will be merged from pull-requests, but
 you can tell me about your fork and changes and then I can link them here as
 further examples for other people to look at.
 
+- [phacops forked](https://github.com/phacops/gods) gods to not use a custom
+  font, but rather replace the icons with plain text.
+
 ##License
 
 "THE BEER-WARE LICENSE" (Revision 42):
