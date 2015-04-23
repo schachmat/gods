@@ -44,6 +44,12 @@ const (
 )
 
 var (
+	netDevs = map[string]struct{}{
+		"eth0:": {},
+		"eth1:": {},
+		"wlan0:": {},
+		"ppp0:": {},
+	}
 	cores = runtime.NumCPU() // count of cores to scale cpu usage
 	rxOld = 0
 	txOld = 0
@@ -95,8 +101,9 @@ func updateNetUse() string {
 	for scanner.Scan() {
 		_, err = fmt.Sscanf(scanner.Text(), "%s %d %d %d %d %d %d %d %d %d",
 			&dev, &rx, &void, &void, &void, &void, &void, &void, &void, &tx)
-		switch dev { // ignore devices like tun, tap, lo, ...
-		case "ppp0:", "eth1:", "wlan0:", netDev + ":":
+		if _, ok := netDevs[dev]; ok {
+//		switch dev { // ignore devices like tun, tap, lo, ...
+//		case "ppp0:", "eth1:", "wlan0:", netDev + ":":
 			rxNow += rx
 			txNow += tx
 		}
