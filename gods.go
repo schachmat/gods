@@ -59,28 +59,30 @@ func fixed(pre string, rate int) string {
 		return pre + " ERR"
 	}
 
-	var spd = float32(rate)
+	var decDigit = 0
 	var suf = bpsSign // default: display as B/s
 
 	switch {
-	case spd >= (1000 * 1024 * 1024): // > 999 MiB/s
+	case rate >= (1000 * 1024 * 1024): // > 999 MiB/s
 		return "" + pre + "ERR"
-	case spd >= (1000 * 1024): // display as MiB/s
-		spd /= (1024 * 1024)
+	case rate >= (1000 * 1024): // display as MiB/s
+		decDigit = (rate / 1024 / 102) % 10
+		rate /= (1024 * 1024)
 		suf = mibpsSign
 		pre = "" + pre + ""
-	case spd >= 1000: // display as KiB/s
-		spd /= 1024
+	case rate >= 1000: // display as KiB/s
+		decDigit = (rate / 102) % 10
+		rate /= 1024
 		suf = kibpsSign
 	}
 
 	var formated = ""
-	if spd >= 100 {
-		formated = fmt.Sprintf("%3.0f", spd)
-	} else if spd >= 10 {
-		formated = fmt.Sprintf("%4.1f", spd)
+	if rate >= 100 {
+		formated = fmt.Sprintf("%3d", rate)
+	} else if rate >= 10 {
+		formated = fmt.Sprintf("%2d.%1d", rate, decDigit)
 	} else {
-		formated = fmt.Sprintf(" %3.1f", spd)
+		formated = fmt.Sprintf(" %1d.%1d", rate, decDigit)
 	}
 	return pre + strings.Replace(formated, ".", floatSeparator, 1) + suf
 }
