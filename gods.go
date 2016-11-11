@@ -64,7 +64,7 @@ func fixed(pre string, rate int) string {
 
 	switch {
 	case rate >= (1000 * 1024 * 1024): // > 999 MiB/s
-		return "" + pre + "ERR"
+		return "" + pre + " ERR"
 	case rate >= (1000 * 1024): // display as MiB/s
 		decDigit = (rate / 1024 / 102) % 10
 		rate /= (1024 * 1024)
