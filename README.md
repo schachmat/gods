@@ -1,11 +1,11 @@
-#gods
+# gods
 
-##Summary
+## Summary
 
 „gods“ stands for „Go dwm status“. It displays time, sysload, memory
 consumption, battery level and network transfer speeds.
 
-##Dependencies
+## Dependencies
 
 Only a working Go environment and the xsetroot binary is needed. Per default you
 should use my [status font](https://github.com/schachmat/status-18) within dwm,
@@ -13,7 +13,7 @@ so you have the nice little icons. Otherwise you need to exchange some
 characters in the source (see gods.go header). For dwm the [statuscolor
 patch](http://dwm.suckless.org/patches/statuscolors) is recommended.
 
-##Usage
+## Usage
 
 To install, run
 
@@ -24,14 +24,14 @@ before actually starting dwm:
 
 	$GOPATH/bin/gods &
 
-##Configuration
+## Configuration
 
 The Gods status bar can be easily modified, just by patching the source. You can
 add new informational panels, remove others, change the ordering or formating.
 With a custom font you can use own icons and separators and through the
 statuscolors patch config in dwm you can change the colors.
 
-##Contributing
+## Contributing
 
 This repository is meant as an example of how to draw your dwm status bar with
 go, as I use it. No additional features will be merged from pull-requests, but
@@ -41,7 +41,7 @@ further examples for other people to look at.
 - [phacops forked](https://github.com/phacops/gods) gods to not use a custom
   font, but rather replace the icons with plain text.
 
-##License
+## License
 
 "THE BEER-WARE LICENSE" (Revision 42):
 <teichm@in.tum.de> wrote this file. As long as you retain this notice you
