@@ -236,7 +236,7 @@ func main() {
 			updateCPUUse(),
 			updateMemUse(),
 			updatePower(),
-			time.Now().Local().Format("Mon " + dateSeparator + " 15:04:05"),
+			time.Now().Local().Format("Mon 02 " + dateSeparator + " 15:04:05"),
 		}
 		exec.Command("xsetroot", "-name", strings.Join(status, fieldSeparator)).Run()
 
