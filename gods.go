@@ -57,7 +57,7 @@ var (
 // fixed builds a fixed width string with given icon and fitting suffix
 func fixed(icon string, rate int) string {
 	if rate < 0 {
-		return icon + " ERR"
+		return " ERR" + icon
 	}
 
 	var decDigit = 0
@@ -65,7 +65,7 @@ func fixed(icon string, rate int) string {
 
 	switch {
 	case rate >= (1000 * 1024 * 1024): // > 999 MiB/s
-		return "" + icon + " ERR"
+		return " ERR" + icon + ""
 	case rate >= (1000 * 1024): // display as MiB/s
 		decDigit = (rate / 1024 / 102) % 10
 		rate /= (1024 * 1024)
@@ -78,11 +78,11 @@ func fixed(icon string, rate int) string {
 	}
 
 	if rate >= 100 {
-		return fmt.Sprintf("%s%3d%s", icon, rate, suf)
+		return fmt.Sprintf("%3d%s%s", rate, suf, icon)
 	} else if rate >= 10 {
-		return fmt.Sprintf("%s %2d%s", icon, rate, suf)
+		return fmt.Sprintf(" %2d%s%s", rate, suf, icon)
 	} else {
-		return fmt.Sprintf("%s%1d.%1d%s", icon, rate, decDigit, suf)
+		return fmt.Sprintf("%1d.%1d%s%s", rate, decDigit, suf, icon)
 	}
 }
 
@@ -113,11 +113,11 @@ func updateNetUse() string {
 // colored surrounds the percentage with color escapes if it is >= 70
 func colored(icon string, percentage int) string {
 	if percentage >= 100 {
-		return fmt.Sprintf("%s%3d", icon, percentage)
+		return fmt.Sprintf("%3d%s", percentage, icon)
 	} else if percentage >= 70 {
-		return fmt.Sprintf("%s%3d", icon, percentage)
+		return fmt.Sprintf("%3d%s", percentage, icon)
 	}
-	return fmt.Sprintf("%s%3d", icon, percentage)
+	return fmt.Sprintf("%3d%s", percentage, icon)
 }
 
 // updatePower reads the current battery and power plug status
@@ -171,11 +171,11 @@ func updatePower() string {
 	}
 
 	if enPerc <= 5 {
-		return fmt.Sprintf("%s%3d", icon, enPerc)
+		return fmt.Sprintf("%3d%s", enPerc, icon)
 	} else if enPerc <= 10 {
-		return fmt.Sprintf("%s%3d", icon, enPerc)
+		return fmt.Sprintf("%3d%s", enPerc, icon)
 	}
-	return fmt.Sprintf("%s%3d", icon, enPerc)
+	return fmt.Sprintf("%3d%s", enPerc, icon)
 }
 
 // updateCPUUse reads the last minute sysload and scales it to the core count
