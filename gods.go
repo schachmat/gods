@@ -1,11 +1,11 @@
-// This programm collects some system information, formats it nicely and sets
+// Command gods collects some system information, formats it nicely and sets
 // the X root windows name so it can be displayed in the dwm status bar.
 //
 // The strange characters in the output are used by dwm to colorize the output
 // ( to , needs the http://dwm.suckless.org/patches/statuscolors patch) and
-// as Icons or separators (e.g. "Ý"). If you don't use the status-18 font
-// (https://github.com/schachmat/status-18), you should probably exchange them
-// by something else ("CPU", "MEM", "|" for separators, …).
+// as Icons or separators (e.g. "\u255e"). This setup is recommended for using
+// the following fonts in dwm config.h: primary: dejavu sans mono, fallback:
+// material design icons.
 //
 // For license information see the file LICENSE
 package main
@@ -23,22 +23,21 @@ import (
 )
 
 const (
-	bpsSign   = "á"
-	kibpsSign = "â"
-	mibpsSign = "ã"
+	bpsSign   = "B"
+	kibpsSign = "K"
+	mibpsSign = "M"
 
-	unpluggedSign = "è"
-	pluggedSign   = "é"
+	unpluggedSign = "\uf177"
+	pluggedSign   = "\uf17b"
 
-	cpuSign = "Ï"
-	memSign = "Þ"
+	cpuSign = "\uf44d"
+	memSign = "\uf289"
 
-	netReceivedSign    = "Ð"
-	netTransmittedSign = "Ñ"
+	netReceivedSign    = "\uf145"
+	netTransmittedSign = "\uf157"
 
-	floatSeparator = "à"
-	dateSeparator  = "Ý"
-	fieldSeparator = "û"
+	dateSeparator  = "\uf246"
+	fieldSeparator = "\u255e"
 )
 
 var (
@@ -46,6 +45,8 @@ var (
 		"eth0:": {},
 		"eth1:": {},
 		"wlan0:": {},
+		"wlp2s0:": {},
+		"enp0s31f6:": {},
 		"ppp0:": {},
 	}
 	cores = runtime.NumCPU() // count of cores to scale cpu usage
@@ -53,10 +54,10 @@ var (
 	txOld = 0
 )
 
-// fixed builds a fixed width string with given pre- and fitting suffix
-func fixed(pre string, rate int) string {
+// fixed builds a fixed width string with given icon and fitting suffix
+func fixed(icon string, rate int) string {
 	if rate < 0 {
-		return pre + " ERR"
+		return icon + " ERR"
 	}
 
 	var decDigit = 0
@@ -64,27 +65,25 @@ func fixed(pre string, rate int) string {
 
 	switch {
 	case rate >= (1000 * 1024 * 1024): // > 999 MiB/s
-		return "" + pre + " ERR"
+		return "" + icon + " ERR"
 	case rate >= (1000 * 1024): // display as MiB/s
 		decDigit = (rate / 1024 / 102) % 10
 		rate /= (1024 * 1024)
 		suf = mibpsSign
-		pre = "" + pre + ""
+		icon = "" + icon + ""
 	case rate >= 1000: // display as KiB/s
 		decDigit = (rate / 102) % 10
 		rate /= 1024
 		suf = kibpsSign
 	}
 
-	var formated = ""
 	if rate >= 100 {
-		formated = fmt.Sprintf("%3d", rate)
+		return fmt.Sprintf("%s%3d%s", icon, rate, suf)
 	} else if rate >= 10 {
-		formated = fmt.Sprintf("%2d.%1d", rate, decDigit)
+		return fmt.Sprintf("%s %2d%s", icon, rate, suf)
 	} else {
-		formated = fmt.Sprintf(" %1d.%1d", rate, decDigit)
+		return fmt.Sprintf("%s%1d.%1d%s", icon, rate, decDigit, suf)
 	}
-	return pre + strings.Replace(formated, ".", floatSeparator, 1) + suf
 }
 
 // updateNetUse reads current transfer rates of certain network interfaces
