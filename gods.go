@@ -12,10 +12,12 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -30,6 +32,8 @@ const (
 	iconNetTX         = "\uf157"
 	iconPowerBattery  = "\uf177"
 	iconPowerCharging = "\uf17b"
+	iconVolume        = "\uf66b"
+	iconVolumeMuted   = "\uf66e"
 
 	fieldSeparator = " "
 )
@@ -54,6 +58,9 @@ var (
 	cores = runtime.NumCPU() // count of cores to scale cpu usage
 	rxOld = 0
 	txOld = 0
+	unmutedLine = regexp.MustCompile("^[[:blank:]]*Mute: no$")
+	volumeLine = regexp.MustCompile("^[[:blank:]]*Volume: ")
+	channelVolume = regexp.MustCompile("[[:digit:]]+%")
 )
 
 // fixed builds a fixed width string with given icon and fitting suffix
@@ -119,10 +126,14 @@ func updateNetUse() string {
 
 // colored surrounds the percentage with color escapes if it is >= 70
 func colored(icon string, percentage int) string {
-	if percentage >= 100 {
+	if percentage >= 1000 {
+		return fmt.Sprintf(" %sHI%s%s", color[red], color[reset], icon)
+	} else if percentage >= 100 {
 		return fmt.Sprintf("%3d%s%s", percentage, color[red], icon)
 	} else if percentage >= 70 {
 		return fmt.Sprintf("%3d%s%s", percentage, color[yellow], icon)
+	} else if percentage < 0 {
+		return fmt.Sprintf("%sNEG%s%s", color[red], color[reset], icon)
 	}
 	return fmt.Sprintf("%3d%s", percentage, icon)
 }
@@ -185,6 +196,43 @@ func updatePower() string {
 	return fmt.Sprintf("%3d%s", enPerc, icon)
 }
 
+// updateVolume reads the volume from pulseaudio
+func updateVolume() string {
+	cmd := exec.Command("pactl", "list", "sinks")
+	cmd.Env = append(os.Environ(), "LC_ALL=C")
+	out, err := cmd.Output()
+	if err != nil {
+		fmt.Println(err)
+		return color[red] + "ERR" + color[reset] + iconVolume
+	}
+	scanner := bufio.NewScanner(bytes.NewBuffer(out))
+	chanCount := 0
+	volSum := 0
+	icon := iconVolumeMuted
+	for scanner.Scan() {
+		line := scanner.Text()
+		if unmutedLine.MatchString(line) {
+			icon = iconVolume
+		}
+		if !volumeLine.MatchString(line) {
+			continue
+		}
+		m := channelVolume.FindAllString(line, -1)
+		for _, c := range m {
+			var v int
+			if _, err := fmt.Sscanf(c, "%d%%", &v); err == nil {
+				chanCount++
+				volSum += v
+			}
+		}
+	}
+	if err := scanner.Err(); err != nil || chanCount == 0 {
+		return color[red] + "ERR" + color[reset] + iconVolume
+	}
+
+	return colored(icon, volSum/chanCount)
+}
+
 // updateCPUUse reads the last minute sysload and scales it to the core count
 func updateCPUUse() string {
 	var load float32
@@ -242,6 +290,7 @@ func main() {
 			updateCPUUse(),
 			updateMemUse(),
 			updatePower(),
+			updateVolume(),
 			time.Now().Local().Format("Mon 02 " + iconDateTime + " 15:04:05"),
 		}
 		s := strings.Join(status, color[reset]+fieldSeparator)
