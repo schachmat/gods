@@ -23,20 +23,14 @@ import (
 )
 
 const (
-	bpsSign   = "B"
-	kibpsSign = "K"
-	mibpsSign = "M"
+	iconCPU           = "\uf44d"
+	iconDateTime      = "\uf246"
+	iconMemory        = "\uf289"
+	iconNetRX         = "\uf145"
+	iconNetTX         = "\uf157"
+	iconPowerBattery  = "\uf177"
+	iconPowerCharging = "\uf17b"
 
-	unpluggedSign = "\uf177"
-	pluggedSign   = "\uf17b"
-
-	cpuSign = "\uf44d"
-	memSign = "\uf289"
-
-	netReceivedSign    = "\uf145"
-	netTransmittedSign = "\uf157"
-
-	dateSeparator  = "\uf246"
 	fieldSeparator = " "
 )
 
@@ -48,7 +42,7 @@ const (
 )
 
 var (
-	color = []string{"\u0001", "\u0002", "\u0003", "\u0006"}
+	color   = []string{"\u0001", "\u0002", "\u0003", "\u0006"}
 	netDevs = map[string]struct{}{
 		"eth0:":      {},
 		"eth1:":      {},
@@ -69,7 +63,7 @@ func fixed(icon string, rate int) string {
 	}
 
 	var decDigit = 0
-	var suf = bpsSign // default: display as B/s
+	var suf = "B" // default: display as B/s
 
 	switch {
 	case rate >= (1000 * 1024 * 1024): // > 999 MiB/s
@@ -77,12 +71,12 @@ func fixed(icon string, rate int) string {
 	case rate >= (1000 * 1024): // display as MiB/s
 		decDigit = (rate / 1024 / 102) % 10
 		rate /= (1024 * 1024)
-		suf = mibpsSign
+		suf = "M"
 		icon = color[green] + icon + color[reset]
 	case rate >= 1000: // display as KiB/s
 		decDigit = (rate / 102) % 10
 		rate /= 1024
-		suf = kibpsSign
+		suf = "K"
 	}
 
 	if rate >= 100 {
@@ -99,7 +93,7 @@ func updateNetUse() string {
 	file, err := os.Open("/proc/net/dev")
 	if err != nil {
 		e := " " + color[red] + "ERR" + color[reset]
-		return e + netReceivedSign + " " + e + netTransmittedSign
+		return e + iconNetRX + " " + e + iconNetTX
 	}
 	defer file.Close()
 
@@ -118,8 +112,8 @@ func updateNetUse() string {
 	defer func() { rxOld, txOld = rxNow, txNow }()
 	return fmt.Sprintf(
 		"%s %s",
-		fixed(netReceivedSign, rxNow-rxOld),
-		fixed(netTransmittedSign, txNow-txOld),
+		fixed(iconNetRX, rxNow-rxOld),
+		fixed(iconNetTX, txNow-txOld),
 	)
 }
 
@@ -139,11 +133,11 @@ func updatePower() string {
 	var enFull, enNow, enPerc int = 0, 0, 0
 	var plugged, err = ioutil.ReadFile(powerSupply + "AC/online")
 	if err != nil {
-		return color[red] + "ERR" + color[reset] + unpluggedSign
+		return color[red] + "ERR" + color[reset] + iconPowerBattery
 	}
 	batts, err := ioutil.ReadDir(powerSupply)
 	if err != nil {
-		return color[red] + "ERR" + color[reset] + unpluggedSign
+		return color[red] + "ERR" + color[reset] + iconPowerBattery
 	}
 
 	readval := func(name, field string) int {
@@ -174,13 +168,13 @@ func updatePower() string {
 	}
 
 	if enFull == 0 { // Battery found but no readable full file.
-		return color[red] + "ERR" + color[reset] + unpluggedSign
+		return color[red] + "ERR" + color[reset] + iconPowerBattery
 	}
 
 	enPerc = enNow * 100 / enFull
-	var icon = unpluggedSign
+	var icon = iconPowerBattery
 	if string(plugged) == "1\n" {
-		icon = pluggedSign
+		icon = iconPowerCharging
 	}
 
 	if enPerc <= 5 {
@@ -196,20 +190,20 @@ func updateCPUUse() string {
 	var load float32
 	var loadavg, err = ioutil.ReadFile("/proc/loadavg")
 	if err != nil {
-		return color[red] + "ERR" + color[reset] + cpuSign
+		return color[red] + "ERR" + color[reset] + iconCPU
 	}
 	_, err = fmt.Sscanf(string(loadavg), "%f", &load)
 	if err != nil {
-		return color[red] + "ERR" + color[reset] + cpuSign
+		return color[red] + "ERR" + color[reset] + iconCPU
 	}
-	return colored(cpuSign, int(load*100.0/float32(cores)))
+	return colored(iconCPU, int(load*100.0/float32(cores)))
 }
 
 // updateMemUse reads the memory used by applications and scales to [0, 100]
 func updateMemUse() string {
 	var file, err = os.Open("/proc/meminfo")
 	if err != nil {
-		return color[red] + "ERR" + color[reset] + memSign
+		return color[red] + "ERR" + color[reset] + iconMemory
 	}
 	defer file.Close()
 
@@ -218,7 +212,7 @@ func updateMemUse() string {
 	for info := bufio.NewScanner(file); done != 15 && info.Scan(); {
 		var prop, val = "", 0
 		if _, err = fmt.Sscanf(info.Text(), "%s %d", &prop, &val); err != nil {
-			return color[red] + "ERR" + color[reset] + memSign
+			return color[red] + "ERR" + color[reset] + iconMemory
 		}
 		switch prop {
 		case "MemTotal:":
@@ -236,7 +230,7 @@ func updateMemUse() string {
 			done |= 8
 		}
 	}
-	return colored(memSign, used*100/total)
+	return colored(iconMemory, used*100/total)
 }
 
 // main updates the dwm statusbar every second
@@ -248,9 +242,9 @@ func main() {
 			updateCPUUse(),
 			updateMemUse(),
 			updatePower(),
-			time.Now().Local().Format("Mon 02 " + dateSeparator + " 15:04:05"),
+			time.Now().Local().Format("Mon 02 " + iconDateTime + " 15:04:05"),
 		}
-		s := strings.Join(status, color[reset] + fieldSeparator)
+		s := strings.Join(status, color[reset]+fieldSeparator)
 		exec.Command("xsetroot", "-name", s).Run()
 
 		// sleep until beginning of next second
