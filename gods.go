@@ -53,6 +53,7 @@ var (
 		"wlan0:":     {},
 		"wlp2s0:":    {},
 		"enp0s31f6:": {},
+		"enp12s0u1:": {},
 		"ppp0:":      {},
 	}
 	cores = runtime.NumCPU() // count of cores to scale cpu usage
@@ -124,16 +125,17 @@ func updateNetUse() string {
 	)
 }
 
-// colored surrounds the percentage with color escapes if it is >= 70
-func colored(icon string, percentage int) string {
+// colored surrounds the percentage with color escapes if it is outside of a
+// formatable range or urgent is true or warn is true.
+func colored(icon string, percentage int, urgent, warn bool) string {
 	if percentage >= 1000 {
 		return fmt.Sprintf(" %sHI%s%s", color[red], color[reset], icon)
-	} else if percentage >= 100 {
-		return fmt.Sprintf("%3d%s%s", percentage, color[red], icon)
-	} else if percentage >= 70 {
-		return fmt.Sprintf("%3d%s%s", percentage, color[yellow], icon)
 	} else if percentage < 0 {
 		return fmt.Sprintf("%sNEG%s%s", color[red], color[reset], icon)
+	} else if urgent {
+		return fmt.Sprintf("%3d%s%s", percentage, color[red], icon)
+	} else if warn {
+		return fmt.Sprintf("%3d%s%s", percentage, color[yellow], icon)
 	}
 	return fmt.Sprintf("%3d%s", percentage, icon)
 }
@@ -141,7 +143,7 @@ func colored(icon string, percentage int) string {
 // updatePower reads the current battery and power plug status
 func updatePower() string {
 	const powerSupply = "/sys/class/power_supply/"
-	var enFull, enNow, enPerc int = 0, 0, 0
+	var enFull, enNow int = 0, 0
 	var plugged, err = ioutil.ReadFile(powerSupply + "AC/online")
 	if err != nil {
 		return color[red] + "ERR" + color[reset] + iconPowerBattery
@@ -182,18 +184,13 @@ func updatePower() string {
 		return color[red] + "ERR" + color[reset] + iconPowerBattery
 	}
 
-	enPerc = enNow * 100 / enFull
+	p := enNow * 100 / enFull
 	var icon = iconPowerBattery
 	if string(plugged) == "1\n" {
 		icon = iconPowerCharging
 	}
 
-	if enPerc <= 5 {
-		return fmt.Sprintf("%3d%s%s", enPerc, color[red], icon)
-	} else if enPerc <= 10 {
-		return fmt.Sprintf("%3d%s%s", enPerc, color[yellow], icon)
-	}
-	return fmt.Sprintf("%3d%s", enPerc, icon)
+	return colored(icon, p, p<=10, p<=20)
 }
 
 // updateVolume reads the volume from pulseaudio
@@ -230,7 +227,8 @@ func updateVolume() string {
 		return color[red] + "ERR" + color[reset] + iconVolume
 	}
 
-	return colored(icon, volSum/chanCount)
+	p := volSum/chanCount
+	return colored(icon, p, p>100, p>=90)
 }
 
 // updateCPUUse reads the last minute sysload and scales it to the core count
@@ -244,7 +242,8 @@ func updateCPUUse() string {
 	if err != nil {
 		return color[red] + "ERR" + color[reset] + iconCPU
 	}
-	return colored(iconCPU, int(load*100.0/float32(cores)))
+	p := int(load*100.0/float32(cores))
+	return colored(iconCPU, p, p>=100, p>=70)
 }
 
 // updateMemUse reads the memory used by applications and scales to [0, 100]
@@ -278,7 +277,8 @@ func updateMemUse() string {
 			done |= 8
 		}
 	}
-	return colored(iconMemory, used*100/total)
+	p := used*100/total
+	return colored(iconMemory, p, p>=95, p>=70)
 }
 
 // main updates the dwm statusbar every second
