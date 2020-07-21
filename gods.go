@@ -25,15 +25,15 @@ import (
 )
 
 const (
-	iconCPU           = "\uf44d"
-	iconDateTime      = "\uf246"
-	iconMemory        = "\uf289"
-	iconNetRX         = "\uf145"
-	iconNetTX         = "\uf157"
-	iconPowerBattery  = "\uf177"
-	iconPowerCharging = "\uf17b"
-	iconVolume        = "\uf66b"
-	iconVolumeMuted   = "\uf66e"
+	iconCPU           = "\uf35b"
+	iconDateTime      = "\uf150"
+	iconMemory        = "\uf193"
+	iconNetRX         = "\uf046"
+	iconNetTX         = "\uf05e"
+	iconPowerBattery  = "\uf080"
+	iconPowerCharging = "\uf084"
+	iconVolume        = "\uf57e"
+	iconVolumeMuted   = "\uf581"
 
 	fieldSeparator = " "
 )

@@ -8,9 +8,11 @@ consumption, battery level and network transfer speeds.
 ## Dependencies
 
 Only a working Go environment and the xsetroot binary is needed. Per default you
-should use my [status font](https://github.com/schachmat/status-18) within dwm,
-so you have the nice little icons. Otherwise you need to exchange some
-characters in the source (see gods.go header). For dwm the [statuscolor
+should use the [Material Design
+Webfont](https://github.com/Templarian/MaterialDesign-Webfont) (I'm using the
+version from Debian `testing`) within dwm, so you have the nice little icons.
+Otherwise you need to exchange some characters in the source (see gods.go
+header). For dwm the [statuscolor
 patch](http://dwm.suckless.org/patches/statuscolors) is recommended.
 
 ## Usage
