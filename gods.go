@@ -47,15 +47,7 @@ const (
 
 var (
 	color   = []string{"\u0001", "\u0002", "\u0003", "\u0006"}
-	netDevs = map[string]struct{}{
-		"eth0:":      {},
-		"eth1:":      {},
-		"wlan0:":     {},
-		"wlp2s0:":    {},
-		"enp0s31f6:": {},
-		"enp12s0u1:": {},
-		"ppp0:":      {},
-	}
+	ignoreNetDevPrefix = []string{"lo", "tun", "tap"}
 	cores = runtime.NumCPU() // count of cores to scale cpu usage
 	rxOld = 0
 	txOld = 0
@@ -108,13 +100,19 @@ func updateNetUse() string {
 	var void = 0 // target for unused values
 	var dev, rx, tx, rxNow, txNow = "", 0, 0, 0, 0
 	var scanner = bufio.NewScanner(file)
+	// Skip first two lines (table header)
+	scanner.Scan()
+	scanner.Scan()
 	for scanner.Scan() {
 		_, err = fmt.Sscanf(scanner.Text(), "%s %d %d %d %d %d %d %d %d %d",
 			&dev, &rx, &void, &void, &void, &void, &void, &void, &void, &tx)
-		if _, ok := netDevs[dev]; ok {
-			rxNow += rx
-			txNow += tx
+		for _, ignorePrefix := range ignoreNetDevPrefix {
+			if strings.HasPrefix(dev, ignorePrefix) {
+				continue
+			}
 		}
+		rxNow += rx
+		txNow += tx
 	}
 
 	defer func() { rxOld, txOld = rxNow, txNow }()
